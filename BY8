@@ -1,0 +1,102 @@
+#!/bin/bash
+
+
+kick() {
+
+UT=$(w | tail -n +3 | awk '{ print $1,$2 }' | perl -pe 's/ /, logged in on /' | fzf --prompt "Which one should be kicked out?  ")
+
+# Error handling in case someone writes their own input into fzf
+if ! echo $UT | grep "logged in on" &>/dev/null
+then
+    echo "Error: I don't understand who I should kick out..."
+    exit 1
+fi
+
+    sudo pkill -9 -t $(echo $UT | perl -pe 's/.*logged in on //')
+    echo "By8 by8 $(echo $UT | perl -pe 's/, logged in on .*//')..."
+}
+
+
+
+ban() {
+    w | tail -n +3 | awk '{ print $1,$2,$7,$8 }' | perl -pe 's/ /\t/g'
+    echo ""
+    echo "What should be grepped for to identify the target? Could be a username, terminal-type, etc. "
+    echo "I understand regex (PCRE) btw, so feel free to use your big brain."
+    echo -n " > "
+    read identifier
+    find=$(w | tail -n +3 | grep -P "$identifier")
+
+    if ! echo "$find" | grep -P "." &>/dev/null
+    then
+        echo "Error: $identifier can't be found..."
+        exit 1
+    fi
+    
+    i=0
+    while true
+    do 
+        echo -ne "\r Waiting for $identifier ($i s)"
+        i=$(($i+1))
+        sleep 1
+
+        if w | tail -n +3 | grep -P "$identifier" &>/dev/null
+        then
+            tty=$(w | tail -n +3 | grep -P "$identifier" | awk '{ print $2 }')
+            sudo pkill -9 -t $tty
+            echo ""
+            echo "[$(date +%T)]  Kicked $tty ($identifier)"
+            i=0
+        fi
+    done 
+
+
+}
+
+
+help() {
+    echo "
+    Usage: By8 [OPTIONS] 
+
+    BY8, or BYE, is a linuix commandline tool for kicking out logged in users on your machine.
+    This can be used for kicking out attackers on a host, but it could equally well serve as a tool
+    for closing down an x session (closing the tty) during debugging.
+
+    Options:
+      -k          Choose a user to kick 
+      -b          Long term ban a user (kick a user as soon as it connects)
+      -h          Show this help page
+   
+ 
+     AUTHOR
+    --------
+    This script is written by arch-err, see github links below:
+    https://github.com/arch-err/
+    The source of this script can be found at https://github.com/arch-err/BY8
+
+    "
+}
+
+
+
+
+# Handle options/flags
+while getopts "kb" opt; do
+  case $opt in
+    k)
+      kick && exit 0;;
+    b)
+      ban && exit 0;;
+    h)
+      # Help/usage information
+      help
+      exit 0
+      ;;
+    ?)
+      echo "Invalid option: -$OPTARG"
+      exit 1
+      ;;
+  esac
+done
+
+echo "You need to use the flags (-k/-b) for this script to actually do something..."
