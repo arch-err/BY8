@@ -19,16 +19,16 @@ sudo apt install fzf
 
 # Usage
 ```
-$ ./By8 -k
+$ ./BY8 -k
 *Choose session to kick*
 ```
 OR
 ```
-$ ./iv3shells -h
+$ ./BY8 -h
 ```
 OR
 ```
-$ ./By8 -b 
+$ ./BY8 -b 
 user1	tty1	xinit	/home/user1/.config/xinitrc
 user2	tty2	xinit	/home/user2/.config/xinitrc
 user3	pts/8	-bash	
